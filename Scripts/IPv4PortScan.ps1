@@ -1,9 +1,10 @@
 ###############################################################################################################
 # Language     :  PowerShell 4.0
 # Filename     :  IPv4PortScan.ps1 
-# Autor        :  BornToBeRoot (https://github.com/BornToBeRoot)
+# Autor        :  SuperBartimus (https://github.com/SuperBartimus)
 # Description  :  Powerful asynchronus IPv4 Port Scanner
-# Repository   :  https://github.com/BornToBeRoot/PowerShell_IPv4PortScanner
+# Repository   :  https://github.com/SuperBartimus/PowerShell_IPv4PortScanner
+# Fork of      :  https://github.com/BornToBeRoot/PowerShell_IPv4PortScanner
 ###############################################################################################################
 
 <#
@@ -71,7 +72,9 @@ param(
 Begin{
     Write-Verbose -Message "Script started at $(Get-Date)"
 
-    $PortList_Path = "$PSScriptRoot\Resources\ports.txt"
+    $PortList_Path = ".\ports.txt"
+
+    $OutTable = @()
 }
 
 Process{
@@ -291,15 +294,22 @@ Process{
                 {
                     $Service = [String]::Empty
 
-                    $Service = $PortsHashTable.Get_Item($Job_Result.Port).Split('|')
-                
-                    [pscustomobject] @{
+                    if($($PortsHashTable.Get_Item($Job_Result.Port)))
+                    {
+                        $Service = $PortsHashTable.Get_Item($Job_Result.Port).Split('|')
+                    }
+
+                   $R = [pscustomobject] @{
                         Port = $Job_Result.Port
                         Protocol = $Job_Result.Protocol
                         ServiceName = $Service[0]
                         ServiceDescription = $Service[1]
                         Status = $Job_Result.Status
                     }
+                    # $R | FT -A
+                    Write-Host -fore gray "Found: " -noNewLine
+                    Write-Host -fore White $Job_Result.Port
+                    $OutTable += $R
                 }   
                 else 
                 {
@@ -309,7 +319,8 @@ Process{
         } 
 
     } While ($Jobs.Count -gt 0)
-    
+
+    $OutTable | FT -A
     Write-Verbose -Message "Closing RunspacePool and free resources..."
 
     # Close the RunspacePool and free resources
@@ -320,5 +331,4 @@ Process{
 }
 
 End{
-
 }
